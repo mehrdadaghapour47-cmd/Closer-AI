@@ -1,0 +1,140 @@
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    const cors = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+    };
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: cors });
+    }
+
+    if (url.pathname === "/api/health" && request.method === "GET") {
+      return json(
+        {
+          success: true,
+          service: "Closer AI",
+          ai: Boolean(env.AI)
+        },
+        cors
+      );
+    }
+
+    if (url.pathname === "/api/agent" && request.method === "POST") {
+      try {
+        const body = await request.json();
+
+        const message = String(body.message || "").trim();
+
+        if (!message) {
+          return json(
+            {
+              success: false,
+              error: "پیام مشتری الزامی است."
+            },
+            cors,
+            400
+          );
+        }
+
+        if (!env.AI) {
+          return json(
+            {
+              success: false,
+              error: "AI binding تنظیم نشده است."
+            },
+            cors,
+            500
+          );
+        }
+
+        const prompt = [
+          "You are Closer AI, a concise Persian sales assistant for a small business.",
+          "Never invent prices, availability, guarantees, delivery times, or policies.",
+          "Use only the supplied business information.",
+          "",
+          "Business:",
+          String(body.business || ""),
+          "",
+          "Product/service:",
+          String(body.product || ""),
+          "",
+          "Business knowledge:",
+          String(body.knowledge || ""),
+          "",
+          "Customer message:",
+          message,
+          "",
+          "Return exactly these sections in Persian:",
+          "پاسخ پیشنهادی:",
+          "نیت مشتری:",
+          "اطلاعات Lead موردنیاز:",
+          "قدم بعدی فروش:",
+          "",
+          "Keep the response natural, useful, and concise."
+        ].join("\n");
+
+        const result = await env.AI.run(
+          "@cf/zai-org/glm-4.7-flash",
+          {
+            messages: [
+              {
+                role: "user",
+                content: prompt
+              }
+            ]
+          }
+        );
+
+        const response =
+          result?.response ??
+          result?.result?.response ??
+          (typeof result === "string"
+            ? result
+            : JSON.stringify(result));
+
+        return json(
+          {
+            success: true,
+            response
+          },
+          cors
+        );
+
+      } catch (error) {
+        return json(
+          {
+            success: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : String(error)
+          },
+          cors,
+          500
+        );
+      }
+    }
+
+    return new Response("Closer AI", {
+      status: 200,
+      headers: {
+        ...cors,
+        "content-type": "text/plain; charset=utf-8"
+      }
+    });
+  }
+};
+
+function json(data, cors, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...cors,
+      "content-type": "application/json; charset=utf-8"
+    }
+  });
+}
