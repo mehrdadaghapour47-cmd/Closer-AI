@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080b12">
+
+  <title>Closer AI | فروشنده هوشمند</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top right, #172033 0%, #080b12 45%),
+        #080b12;
+      color: #f5f7fb;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .container {
+      width: min(920px, 100%);
+      margin: auto;
+      padding: 22px;
+    }
+
+    .hero {
+      padding: 45px 0 25px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 7px 13px;
+      border: 1px solid #303949;
+      border-radius: 999px;
+      color: #aeb8c8;
+      font-size: 13px;
+    }
+
+    h1 {
+      font-size: clamp(36px, 8vw, 62px);
+      line-height: 1.05;
+      margin: 20px 0 15px;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    p {
+      color: #aeb7c6;
+      line-height: 1.8;
+    }
+
+    .hero p {
+      max-width: 680px;
+      font-size: 17px;
+    }
+
+    .card {
+      background: rgba(17, 21, 30, 0.92);
+      border: 1px solid #252d3b;
+      border-radius: 22px;
+      padding: 22px;
+      margin: 16px 0;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      margin: 9px 0 7px;
+      color: #d2d8e2;
+      font-size: 14px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid #303949;
+      border-radius: 13px;
+      padding: 13px;
+      background: #090c13;
+      color: #ffffff;
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #66758d;
+    }
+
+    textarea {
+      min-height: 125px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 15px 18px;
+      margin-top: 15px;
+      background: #ffffff;
+      color: #080b12;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(.99);
+    }
+
+    .result {
+      white-space: pre-wrap;
+      min-height: 120px;
+      padding: 17px;
+      border-radius: 15px;
+      background: #090c13;
+      border: 1px solid #252d3b;
+      color: #e9edf4;
+      line-height: 1.9;
+    }
+
+    .status {
+      margin-top: 10px;
+      color: #8f9bad;
+      font-size: 13px;
+    }
+
+    .price {
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .feature {
+      color: #c7ced9;
+      line-height: 1.9;
+    }
+
+    .footer {
+      padding: 30px 0 10px;
+      text-align: center;
+      color: #6f7a8b;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <section class="hero">
+    <span class="badge">Closer AI • MVP</span>
+
+    <h1>
+      فروشنده هوشمند
+      <br>
+      کسب‌وکار تو.
+    </h1>
+
+    <p>
+      اطلاعات کسب‌وکارت را وارد کن.
+      Closer AI پیام مشتری را تحلیل می‌کند،
+      پاسخ پیشنهادی می‌سازد و قدم بعدی فروش را مشخص می‌کند.
+    </p>
+  </section>
+
+
+  <section class="card">
+
+    <h2>🏪 اطلاعات کسب‌وکار</h2>
+
+    <div class="grid">
+
+      <div>
+        <label for="business">
+          نام کسب‌وکار
+        </label>
+
+        <input
+          id="business"
+          type="text"
+          placeholder="مثلاً باشگاه آریا"
+        >
+      </div>
+
+
+      <div>
+        <label for="product">
+          محصول یا خدمت
+        </label>
+
+        <input
+          id="product"
+          type="text"
+          placeholder="مثلاً برنامه تمرینی آنلاین"
+        >
+      </div>
+
+    </div>
+
+
+    <label for="knowledge">
+      اطلاعات فروش
+    </label>
+
+    <textarea
+      id="knowledge"
+      placeholder="قیمت، ویژگی‌ها، شرایط ارسال، ساعات کاری، قوانین فروش و هر اطلاعاتی که فروشنده باید بداند..."
+    ></textarea>
+
+  </section>
+
+
+  <section class="card">
+
+    <h2>💬 پیام مشتری</h2>
+
+    <textarea
+      id="customerMessage"
+      placeholder="مثلاً: قیمت برنامه چنده؟ برای من مناسبه؟"
+    ></textarea>
+
+    <button id="runButton">
+      🤖 اجرای Closer AI
+    </button>
+
+    <div class="status" id="status">
+      آماده دریافت پیام مشتری
+    </div>
+
+  </section>
+
+
+  <section class="card">
+
+    <h2>🎯 نتیجه تحلیل</h2>
+
+    <div
+      class="result"
+      id="result"
+    >
+      هنوز پیامی تحلیل نشده است.
+    </div>
+
+  </section>
+
+
+  <section class="grid">
+
+    <div class="card">
+
+      <div class="price">
+        Free
+      </div>
+
+      <p>
+        برای شروع
+      </p>
+
+      <div class="feature">
+        ✓ تست رایگان<br>
+        ✓ ۲۰ مکالمه آزمایشی<br>
+        ✓ AI Sales Agent
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="price">
+        €9.90
+      </div>
+
+      <p>
+        Starter
+      </p>
+
+      <div class="feature">
+        ✓ مکالمات بیشتر<br>
+        ✓ Lead Capture<br>
+        ✓ پاسخ‌های فروش
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="price">
+        €29.90
+      </div>
+
+      <p>
+        Pro
+      </p>
+
+      <div class="feature">
+        ✓ پیگیری مشتری<br>
+        ✓ تحلیل فروش<br>
+        ✓ داشبورد
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <div class="footer">
+    Closer AI — AI Sales Agent
+  </div>
+
+</div>
+
+
+<script>
+
+const runButton = document.getElementById("runButton");
+
+const result = document.getElementById("result");
+
+const status = document.getElementById("status");
+
+
+runButton.addEventListener("click", async () => {
+
+  const business =
+    document.getElementById("business").value.trim();
+
+  const product =
+    document.getElementById("product").value.trim();
+
+  const knowledge =
+    document.getElementById("knowledge").value.trim();
+
+  const message =
+    document.getElementById("customerMessage").value.trim();
+
+
+  if (!message) {
+
+    result.textContent =
+      "اول پیام مشتری را وارد کن.";
+
+    return;
+  }
+
+
+  runButton.disabled = true;
+
+  runButton.textContent =
+    "⏳ در حال تحلیل...";
+
+  status.textContent =
+    "Closer AI در حال پردازش پیام مشتری است...";
+
+  result.textContent =
+    "در حال تحلیل پیام...";
+
+
+  try {
+
+    const response = await fetch(
+      "/api/agent",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+          business,
+
+          product,
+
+          knowledge,
+
+          message
+
+        })
+      }
+    );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok || !data.success) {
+
+      throw new Error(
+        data.error || "خطا در ارتباط با AI"
+      );
+
+    }
+
+
+    result.textContent =
+      data.response ||
+      "پاسخی از AI دریافت نشد.";
+
+    status.textContent =
+      "✅ تحلیل با موفقیت انجام شد.";
+
+  }
+
+  catch (error) {
+
+    result.textContent =
+      "Backend هنوز متصل نشده یا خطایی رخ داده است.\n\n" +
+      error.message;
+
+    status.textContent =
+      "⚠️ اتصال Backend را بررسی کن.";
+
+  }
+
+  finally {
+
+    runButton.disabled = false;
+
+    runButton.textContent =
+      "🤖 اجرای Closer AI";
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>
