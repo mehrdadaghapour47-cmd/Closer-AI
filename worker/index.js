@@ -106,49 +106,60 @@ export default {
               error: "AI پاسخ متنی قابل استفاده برنگرداند."
             },
             cors,
-            502
-          );
-        }
+const cleanResponse = response.trim();
 
-        return json(
-          {
-            success: true,
-            response: response.trim()
-          },
-          cors
-        );
+let intent = "استعلام";
+let nextStep = "پاسخ به مشتری و ادامه گفتگو";
 
-      } catch (error) {
-        return json(
-          {
-            success: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : String(error)
-          },
-          cors,
-          500
-        );
-      }
-    }
-
-    return new Response("Closer AI", {
-      status: 200,
-      headers: {
-        ...cors,
-        "content-type": "text/plain; charset=utf-8"
-      }
-    });
-  }
-};
-
-function json(data, cors, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      ...cors,
-      "content-type": "application/json; charset=utf-8"
-    }
-  });
+if (/قیمت|هزینه|چنده|چند|تومان|یورو|دلار/.test(message)) {
+  intent = "استعلام قیمت";
+  nextStep = "قیمت و شرایط خرید را برای مشتری ارسال کن";
+} else if (/خرید|می.?خرم|ثبت.?نام|سفارش|رزرو|پرداخت/.test(message)) {
+  intent = "آماده خرید";
+  nextStep = "اطلاعات لازم برای ثبت سفارش یا پرداخت را دریافت کن";
+} else if (/مشاوره|اطلاعات|توضیح|چطور|شرایط|ویژگی/.test(message)) {
+  intent = "نیاز به اطلاعات";
+  nextStep = "اطلاعات موردنیاز را بده و برای اقدام بعدی سؤال مشخص بپرس";
 }
+
+let leadSaved = false;
+
+if (env.closer_ai_db) {
+  try {
+    const leadName = String(body.name || "مشتری").trim() || "مشتری";
+
+    await env.closer_ai_db
+      .prepare(
+        `INSERT INTO leads
+          (name, message, intent, status, next_step, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .bind(
+        leadName,
+        message,
+        intent,
+        "جدید",
+        nextStep,
+        new Date().toISOString()
+      )
+      .run();
+
+    leadSaved = true;
+  } catch (leadError) {
+    console.error("Lead save failed:", leadError);
+  }
+}
+
+return json(
+  {
+    success: true,
+    response: cleanResponse,
+    lead: {
+      saved: leadSaved,
+      intent,
+      status: "جدید",
+      next_step: nextStep
+    }
+  },
+  cors
+);
