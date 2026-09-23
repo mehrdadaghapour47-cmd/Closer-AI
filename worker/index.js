@@ -89,17 +89,31 @@ export default {
           }
         );
 
-        const response =
-          result?.response ??
-          result?.result?.response ??
-          (typeof result === "string"
-            ? result
-            : JSON.stringify(result));
+        let response = null;
+
+        if (typeof result === "string") {
+          response = result;
+        } else if (typeof result?.response === "string") {
+          response = result.response;
+        } else if (typeof result?.result?.response === "string") {
+          response = result.result.response;
+        }
+
+        if (!response || !response.trim()) {
+          return json(
+            {
+              success: false,
+              error: "AI پاسخ متنی قابل استفاده برنگرداند."
+            },
+            cors,
+            502
+          );
+        }
 
         return json(
           {
             success: true,
-            response
+            response: response.trim()
           },
           cors
         );
