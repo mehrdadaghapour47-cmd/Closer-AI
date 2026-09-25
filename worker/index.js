@@ -12,17 +12,24 @@ export default {
       return new Response(null, { headers: cors });
     }
 
+    // =========================
+    // HEALTH CHECK
+    // =========================
     if (url.pathname === "/api/health" && request.method === "GET") {
       return json(
         {
           success: true,
           service: "Closer AI",
-          ai: Boolean(env.AI)
+          ai: Boolean(env.AI),
+          database: Boolean(env.closer_ai_db)
         },
         cors
       );
     }
 
+    // =========================
+    // AI SALES AGENT
+    // =========================
     if (url.pathname === "/api/agent" && request.method === "POST") {
       try {
         const body = await request.json();
@@ -89,6 +96,9 @@ export default {
           }
         );
 
+        // =========================
+        // SAFE AI RESPONSE PARSING
+        // =========================
         let response = null;
 
         if (typeof result === "string") {
@@ -106,60 +116,118 @@ export default {
               error: "AI پاسخ متنی قابل استفاده برنگرداند."
             },
             cors,
-const cleanResponse = response.trim();
+            502
+          );
+        }
 
-let intent = "استعلام";
-let nextStep = "پاسخ به مشتری و ادامه گفتگو";
+        const cleanResponse = response.trim();
 
-if (/قیمت|هزینه|چنده|چند|تومان|یورو|دلار/.test(message)) {
-  intent = "استعلام قیمت";
-  nextStep = "قیمت و شرایط خرید را برای مشتری ارسال کن";
-} else if (/خرید|می.?خرم|ثبت.?نام|سفارش|رزرو|پرداخت/.test(message)) {
-  intent = "آماده خرید";
-  nextStep = "اطلاعات لازم برای ثبت سفارش یا پرداخت را دریافت کن";
-} else if (/مشاوره|اطلاعات|توضیح|چطور|شرایط|ویژگی/.test(message)) {
-  intent = "نیاز به اطلاعات";
-  nextStep = "اطلاعات موردنیاز را بده و برای اقدام بعدی سؤال مشخص بپرس";
-}
+        // =========================
+        // LEAD INTENT DETECTION
+        // =========================
+        let intent = "استعلام";
+        let nextStep = "پاسخ به مشتری و ادامه گفتگو";
 
-let leadSaved = false;
+        if (/قیمت|هزینه|چنده|چند|تومان|یورو|دلار/.test(message)) {
+          intent = "استعلام قیمت";
+          nextStep = "قیمت و شرایط خرید را برای مشتری ارسال کن";
+        } else if (
+          /خرید|می.?خرم|ثبت.?نام|سفارش|رزرو|پرداخت/.test(message)
+        ) {
+          intent = "آماده خرید";
+          nextStep = "اطلاعات لازم برای ثبت سفارش یا پرداخت را دریافت کن";
+        } else if (
+          /مشاوره|اطلاعات|توضیح|چطور|شرایط|ویژگی/.test(message)
+        ) {
+          intent = "نیاز به اطلاعات";
+          nextStep = "اطلاعات موردنیاز را بده و برای اقدام بعدی سؤال مشخص بپرس";
+        }
 
-if (env.closer_ai_db) {
-  try {
-    const leadName = String(body.name || "مشتری").trim() || "مشتری";
+        // =========================
+        // SAVE LEAD TO D1
+        // =========================
+        let leadSaved = false;
 
-    await env.closer_ai_db
-      .prepare(
-        `INSERT INTO leads
-          (name, message, intent, status, next_step, created_at)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
-        leadName,
-        message,
-        intent,
-        "جدید",
-        nextStep,
-        new Date().toISOString()
-      )
-      .run();
+        if (env.closer_ai_db) {
+          try {
+            const leadName =
+              String(body.name || "مشتری").trim() || "مشتری";
 
-    leadSaved = true;
-  } catch (leadError) {
-    console.error("Lead save failed:", leadError);
-  }
-}
+            await env.closer_ai_db
+              .prepare(
+                `INSERT INTO leads
+                  (name, message, intent, status, next_step, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?)`
+              )
+              .bind(
+                leadName,
+                message,
+                intent,
+                "جدید",
+                nextStep,
+                new Date().toISOString()
+              )
+              .run();
 
-return json(
-  {
-    success: true,
-    response: cleanResponse,
-    lead: {
-      saved: leadSaved,
-      intent,
-      status: "جدید",
-      next_step: nextStep
+            leadSaved = true;
+          } catch (leadError) {
+            console.error("Lead save failed:", leadError);
+          }
+        }
+
+        // =========================
+        // FINAL RESPONSE
+        // =========================
+        return json(
+          {
+            success: true,
+            response: cleanResponse,
+            lead: {
+              saved: leadSaved,
+              intent,
+              status: "جدید",
+              next_step: nextStep
+            }
+          },
+          cors
+        );
+      } catch (error) {
+        console.error("Agent error:", error);
+
+        return json(
+          {
+            success: false,
+            error: "خطایی در پردازش درخواست رخ داد."
+          },
+          cors,
+          500
+        );
+      }
     }
-  },
-  cors
-);
+
+    // =========================
+    // UNKNOWN ROUTE
+    // =========================
+    return json(
+      {
+        success: false,
+        error: "مسیر درخواست پیدا نشد."
+      },
+      cors,
+      404
+    );
+  }
+};
+
+// =========================
+// JSON HELPER
+// =========================
+function json(data, cors, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...cors,
+      "Content-Type": "application/json; charset=utf-8"
+    }
+  });
+}
